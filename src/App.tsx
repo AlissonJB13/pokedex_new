@@ -1,4 +1,3 @@
-import "./App.css";
 import { GlobalStyle } from "./global-style";
 import Pokedex from "./Pokedex";
 
