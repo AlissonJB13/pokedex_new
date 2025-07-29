@@ -27,7 +27,7 @@ export const PokedexContainer = styled.div`
 `
 export const PokemonImage = styled.img`
     position: absolute;
-    bottom: 55%;
+    bottom: 50%;
     left: 50%;
     transform: translate(-63%, 0);
     height: 18%;

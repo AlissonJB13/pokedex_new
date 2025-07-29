@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import pokedexImage from "./assets/pokedex.png";
 import {
   PokedexContainer,
@@ -10,46 +10,70 @@ import {
 import type { IPokemon } from "./IPokemon";
 
 const Pokedex = () => {
-  const [pokemonName, setPokemonName] = useState("6");
-  const [data, setData] = useState<IPokemon>(null);
+  const [data, setData] = useState<IPokemon>();
+  const [pokemonInput, setPokemonInput] = useState(""); // controle do input
+  const [pokemonImage, setPokemonImage] = useState<string>();
 
-  useEffect(() => {
-    const fetchPokemon = async () => {
-      try {
-        const res = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${pokemonName}`
-        );
-        const json = await res.json();
-        setData(json);
-      } catch (error) {
-        console.error(`falha ao buscar ${pokemonName}: ${error}`);
-      }
-    };
+  const fetchPokemon = async (pokemon: string) => {
+    const apiResponse = await fetch(
+      `https://pokeapi.co/api/v2/pokemon/${pokemon}`
+    );
+    if (!apiResponse.ok) {
+      throw new Error("Pokémon não encontrado");
+    }
+    const data = await apiResponse.json();
+    return data;
+  };
 
-    fetchPokemon();
-  }, [pokemonName]);
+  const renderPokemon = async (pokemon: string) => {
+    try {
+      const data = await fetchPokemon(pokemon);
+      setData(data);
+      setPokemonImage(
+        data.sprites.versions["generation-v"]["black-white"].animated
+          .front_default
+      );
+    } catch (error) {
+      console.error(error);
+      setData(undefined);
+      setPokemonImage("");
+    }
+  };
 
-  console.log(data);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const value = pokemonInput.trim().toLowerCase();
+    if (!value) return;
+    await renderPokemon(value);
+  };
 
-  const pokemonImage =
-    data?.sprites.versions["generation-v"]["black-white"].animated
-      .front_default;
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setPokemonInput(e.target.value);
+  };
 
   return (
     <PokedexContainer>
-      <PokemonImage src={pokemonImage} alt="pokemon" />
-      <h1>
-        <span className="poke_number">{data?.id}</span>-
-        <span className="poke_name">{data?.name}</span>
-      </h1>
-      <PokemonSearch>
-        <input type="search" placeholder="Name or Number" required />
+      {pokemonImage && <PokemonImage src={pokemonImage} alt="pokemon" />}
+      {data && (
+        <h1>
+          <span className="poke_number">{data.id}</span>-
+          <span className="poke_name">{data.name}</span>
+        </h1>
+      )}
+      <PokemonSearch onSubmit={handleSubmit}>
+        <input
+          type="search"
+          placeholder="Name or Number"
+          required
+          value={pokemonInput}
+          onChange={handleInputChange}
+        />
       </PokemonSearch>
       <PokemonButtons>
         <button>&lt; Prev</button>
         <button>Next &gt;</button>
       </PokemonButtons>
-      <PokedexImage src={pokedexImage} alt="pokedex" />;
+      <PokedexImage src={pokedexImage} alt="pokedex" />
     </PokedexContainer>
   );
 };
